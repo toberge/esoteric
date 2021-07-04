@@ -120,3 +120,6 @@ class Befunge(Interpreter):
 
     def recv(self, value):
         self.stack.append(value)
+
+    def internal_state(self):
+        return [str(i) for i in reversed(self.stack)]

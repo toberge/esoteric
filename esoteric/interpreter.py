@@ -60,6 +60,10 @@ class Interpreter(ABC):
     def recv(self, value: Union[int, str]):
         pass
 
+    @abstractmethod
+    def internal_state(self) -> list[str]:
+        pass
+
     def __iter__(self):
         while not self.halted:
             yield self.step()
@@ -93,23 +97,3 @@ class Interpreter(ABC):
             elif action == Actions.ERROR:
                 raise Exception(value)
         return "".join(output)
-
-
-class TestLang(Interpreter):
-    delta = coord(1, 0)
-    stack = []
-
-    def step(self):
-        if self.cell == "e":
-            return (self.pos, Actions.HALT, None)
-        print(self.pos)
-        self.pos += self.delta
-        return (self.pos, Actions.NONE, None)
-
-    def recv(self, value):
-        self.stack.append(value)
-
-
-if __name__ == "__main__":
-    test = TestLang(["a", "b", "c", "e"])
-    test.run()
