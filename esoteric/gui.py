@@ -66,6 +66,10 @@ class Gui:
             self.resultpane.refresh()
             self.codepane.refresh()
 
+        self.resultpane.addstr(1, 1, "Finished. Press any key.")
+        curses.halfdelay()
+        self.codepane.getch()
+
 
 def run(interpreter):
     def _run(screen):

@@ -3,6 +3,7 @@ Implementation of Befunge-93
 
 See https://esolangs.org/wiki/Befunge#Instructions in particular
 """
+
 from esoteric.interpreter import Actions, coord, Interpreter
 import random
 
@@ -43,6 +44,8 @@ class Befunge(Interpreter):
     def step(self):
         try:
             res = self._step()
+            if res[1] == Actions.HALT:
+                self.halted = True
         except Exception as err:
             print(self.pos, self.delta, self.cell, self.stack)
             raise err
