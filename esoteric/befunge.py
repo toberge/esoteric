@@ -4,7 +4,9 @@ Implementation of Befunge-93
 See https://esolangs.org/wiki/Befunge#Instructions in particular
 """
 
+from esoteric.gui import Colors
 from esoteric.interpreter import Actions, coord, Interpreter
+from itertools import chain
 import random
 
 DELTA_CHANGERS = {
@@ -35,11 +37,26 @@ NUMBERS = list(str(i) for i in range(10))
 
 DIRECTIONS = list(DELTA_CHANGERS.values())
 
+COLORS = {
+    **{c: Colors.RED for c in "@"},
+    **{c: Colors.GREEN for c in '"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefhijklmnoqrstuvwxyz'},
+    **{c: Colors.YELLOW for c in chain(DELTA_CHANGERS.keys(), "_|?#")},
+    **{c: Colors.BLUE for c in chain(BINARY_OPS.keys(), "/")},
+    **{c: Colors.MAGENTA for c in chain(STACK_MODIFIERS.keys(), ",.gp")},
+    **{c: Colors.CYAN for c in "&~"},
+}
+
 
 class Befunge(Interpreter):
     delta = coord(1, 0)
     stack = []
     stringmode = False
+
+    def color_of(self, position: coord) -> int:
+        try:
+            return COLORS[self.board[position.y][position.x]]
+        except KeyError:
+            return 8
 
     def step(self):
         try:

@@ -64,6 +64,10 @@ class Interpreter(ABC):
     def internal_state(self) -> list[str]:
         pass
 
+    @abstractmethod
+    def color_of(self, char: str) -> int:
+        pass
+
     def __iter__(self):
         while not self.halted:
             yield self.step()

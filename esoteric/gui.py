@@ -1,12 +1,31 @@
 import curses
-import time
-from functools import partial
-from esoteric.interpreter import Actions
+from enum import IntEnum, auto
+from esoteric.interpreter import Actions, coord
 from itertools import islice
+
+
+class Colors(IntEnum):
+    BLACK = auto()
+    RED = auto()
+    GREEN = auto()
+    YELLOW = auto()
+    BLUE = auto()
+    MAGENTA = auto()
+    CYAN = auto()
+    WHITE = auto()
 
 
 class Gui:
     def __init__(self, screen, interpreter):
+        curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_BLACK)
+        curses.init_pair(2, curses.COLOR_RED, curses.COLOR_BLACK)
+        curses.init_pair(3, curses.COLOR_GREEN, curses.COLOR_BLACK)
+        curses.init_pair(4, curses.COLOR_YELLOW, curses.COLOR_BLACK)
+        curses.init_pair(5, curses.COLOR_BLUE, curses.COLOR_BLACK)
+        curses.init_pair(6, curses.COLOR_MAGENTA, curses.COLOR_BLACK)
+        curses.init_pair(7, curses.COLOR_CYAN, curses.COLOR_BLACK)
+        curses.init_pair(8, curses.COLOR_WHITE, curses.COLOR_BLACK)
+
         curses.halfdelay(1)
         screen.clear()
         self.screen = screen
@@ -19,14 +38,22 @@ class Gui:
         lines, cols = screen.getmaxyx()
         self.lines = lines
         self.cols = cols
-        self.codepane = curses.newwin(lines, cols // 2)
-        self.stackpane = curses.newwin(lines // 2, cols // 2, 0, cols // 2)
-        self.resultpane = curses.newwin(lines // 2, cols // 2, lines // 2, cols // 2)
+        colsplit = cols // 2 + cols % 2
+        linesplit = lines // 2 + lines % 2
+        self.codepane = curses.newwin(lines, colsplit)
+        self.stackpane = curses.newwin(linesplit, cols // 2, 0, colsplit)
+        self.resultpane = curses.newwin(lines // 2, cols // 2, linesplit, colsplit)
 
     def display_code(self):
         self.codepane.border()
         for i, line in enumerate(self.interpreter.board):
-            self.codepane.addstr(i + 1, 1, "".join(line))
+            for j, c in enumerate(line):
+                self.codepane.addch(
+                    i + 1,
+                    j + 1,
+                    c,
+                    curses.color_pair(self.interpreter.color_of(coord(j, i))),
+                )
 
     def display_stack(self):
         # Clear old stack, to avoid issues when it empties
@@ -67,7 +94,7 @@ class Gui:
             self.codepane.refresh()
 
         self.resultpane.addstr(1, 1, "Finished. Press any key.")
-        curses.halfdelay()
+        curses.halfdelay(1)
         self.codepane.getch()
 
 
