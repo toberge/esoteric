@@ -4,4 +4,7 @@ init:
 demo:
 	python -m esoteric --gui examples/dna.befunge
 
+rec:
+	SHELL=./befunge_demo.sh asciinema rec
+
 .PHONY: init demo
