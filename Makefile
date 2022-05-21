@@ -1,4 +1,7 @@
 init:
-	pip -r requirements.txt
+	pip install -r requirements.txt
 
-.PHONY: init
+demo:
+	python -m esoteric --gui examples/dna.befunge
+
+.PHONY: init demo

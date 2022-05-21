@@ -6,4 +6,4 @@ Interpreter, visualizer and editor for (2D) esoteric programming languages like 
 
 Thanks to [this Codewars kata](https://www.codewars.com/kata/526c7b931666d07889000a3c/) for inspiring me to start this project.
 
-The [hello world](examples/hello_world.befunge) example was taken from the examples on the esolang wiki.
+The [hello world](examples/hello_world.befunge) and [DNA](examples/dna.befunge) examples were taken from the examples on the esolang wiki.
