@@ -63,15 +63,14 @@ class Gui:
             self.stackpane.addstr(i, 1, blank)
 
         self.stackpane.border()
-        self.stackpane.addstr(1, 1, "Stack:")
         for i, line in islice(
             enumerate(self.interpreter.internal_state()), self.lines // 2 - 3
         ):
-            self.stackpane.addstr(i + 2, 1, "".join(line))
+            self.stackpane.addstr(i + 1, 1, "".join(line))
 
     def display_result(self):
         self.resultpane.border()
-        self.resultpane.addstr(1, 1, "Result:")
+        self.resultpane.addstr(1, 1, "Result:", curses.A_BOLD)
         for i, line in enumerate(self.result.splitlines()):
             self.resultpane.addstr(i + 2, 1, "".join(line))
 
@@ -83,6 +82,15 @@ class Gui:
 
             if action == Actions.OUTPUT:
                 self.result += output
+            elif action == Actions.ERROR:
+                self.resultpane.addstr(1, 1, "An error occurred:", curses.A_BOLD)
+                message, error = output
+                for i, line in enumerate(message.split("\n")):
+                    self.resultpane.addstr(i + 2, 1, line)
+                self.resultpane.refresh()
+                curses.halfdelay(100)
+                self.codepane.getch()
+                raise error
 
             self.display_stack()
             self.display_result()
@@ -94,15 +102,18 @@ class Gui:
             ):
                 self.codepane.move(pos.y + 1, pos.x + 1)
             else:
-                self.resultpane.addstr(1, 1, "Cursor is out of bounds")
+                self.resultpane.addstr(1, 1, "Cursor is out of bounds", curses.A_BOLD)
 
             self.stackpane.refresh()
             self.resultpane.refresh()
             self.codepane.refresh()
-
-        self.resultpane.addstr(1, 1, "Finished. Press any key.")
-        curses.halfdelay(1)
-        self.codepane.getch()
+        else:  # On execution end
+            self.resultpane.addstr(
+                1, 1, "Finished. Press any key or wait 10 seconds.", curses.A_BOLD
+            )
+            self.resultpane.refresh()
+            curses.halfdelay(100)
+            self.codepane.getch()
 
 
 def run(interpreter):

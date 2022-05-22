@@ -133,9 +133,11 @@ class Fish(Interpreter):
             if res[1] == Actions.HALT:
                 self.halted = True
         except Exception as err:
-            print(self.pos, self.delta, self.cell, self.stack, file=stderr)
-            print("something smells fishy...", file=stderr)
-            raise err
+            return (
+                self.pos,
+                Actions.ERROR,
+                (f"something smells fishy...\n{err}", err),
+            )
         return res
 
     # TODO "something smells fishy..." on error
@@ -225,8 +227,7 @@ class Fish(Interpreter):
             a, b = self.stack.pop(), self.stack.pop()
             if a == 0:
                 # If division by 0, this is an error
-                action = Actions.ERROR
-                value = "Division by zero"
+                raise Exception("Division by zero")
             else:
                 self.stack.append(b / a)
 
@@ -277,4 +278,6 @@ class Fish(Interpreter):
         self.stack.append(value)
 
     def internal_state(self):
-        return [str(i) for i in reversed(self.stack)]
+        return ["Register:", str(self.register), "Stack:"] + [
+            str(i) for i in reversed(self.stack)
+        ]

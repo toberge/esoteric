@@ -64,8 +64,11 @@ class Befunge(Interpreter):
             if res[1] == Actions.HALT:
                 self.halted = True
         except Exception as err:
-            print(self.pos, self.delta, self.cell, self.stack)
-            raise err
+            return (
+                self.pos,
+                Actions.ERROR,
+                (f"{err}", err),
+            )
         return res
 
     def _step(self):
@@ -102,8 +105,7 @@ class Befunge(Interpreter):
             try:
                 self.board[y][x] = chr(v)
             except KeyError:
-                action = Actions.ERROR
-                value = f"No such position ({x}, {y})"
+                raise Exception(f"No such position ({x}, {y})")
         elif self.cell in DELTA_CHANGERS:
             self.delta = DELTA_CHANGERS[self.cell]
         elif self.cell == "?":
@@ -142,4 +144,4 @@ class Befunge(Interpreter):
         self.stack.append(value)
 
     def internal_state(self):
-        return [str(i) for i in reversed(self.stack)]
+        return ["Stack:"] + [str(i) for i in reversed(self.stack)]

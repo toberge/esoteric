@@ -29,7 +29,7 @@ class Actions(Enum):
     ERROR = auto()
 
 
-StepResult = Union[tuple[coord, int, int], tuple[coord, int, chr]]
+StepResult = Union[tuple[coord, int, int], tuple[coord, int, tuple[str, Exception]]]
 
 
 class Interpreter(ABC):
