@@ -4,11 +4,13 @@ Implementation of Fish
 See https://esolangs.org/wiki/Fish#Instructions
 """
 
+from collections import defaultdict
 from sys import stderr
-from esoteric.gui import Colors
-from esoteric.interpreter import Actions, coord, Interpreter
 from itertools import chain
 import random
+
+from esoteric.gui import Colors
+from esoteric.interpreter import Actions, coord, Interpreter
 
 right = coord(1, 0)
 down = coord(0, 1)
@@ -83,13 +85,13 @@ DIRECTIONS = list(DELTA_CHANGERS.values())
 
 COLORS = {
     **{c: Colors.RED for c in "@"},
+    **{
+        c: Colors.GREEN for c in "'\"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefhijklmnoqrstuvwxyz"
+    },
     **{c: Colors.YELLOW for c in chain(DELTA_CHANGERS.keys(), MIRRORS.keys(), "#x!?.")},
     **{c: Colors.BLUE for c in chain(BINARY_OPS.keys(), ",")},
     **{c: Colors.MAGENTA for c in chain(STACK_MODIFIERS.keys(), "r{}[]gp")},
     **{c: Colors.CYAN for c in "noi"},
-    **{
-        c: Colors.GREEN for c in "'\"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefhijklmnoqrstuvwxyz"
-    },
 }
 
 
@@ -102,14 +104,26 @@ class Fish(Interpreter):
 
     def __init__(self, board: list[list[str]], value=None):
         super().__init__(board)
-        # TODO board is inifinite -_-
+        # Initialize infinite board w/numeric values
+        self.grid = defaultdict(int)
+        for y, row in enumerate(board):
+            for x, cell in enumerate(row):
+                # Only assign cells with something non-default in them
+                if cell != " ":
+                    self.grid[coord(x, y)] = ord(cell)
+        self.minpos = coord(0, 0)
         if value is not None:
             self.stack = [value]
+
+    # Need to override this property to account for the infinite grid
+    @property
+    def cell(self):
+        return chr(self.grid[self.pos])
 
     def color_of(self, position: coord) -> int:
         try:
             # TODO properly color strings (which is kinda impossible)
-            return COLORS[self.board[position.y][position.x]]
+            return COLORS[chr(self.grid[position])]
         except KeyError:
             return 8
 
@@ -129,7 +143,7 @@ class Fish(Interpreter):
     def _step(self):
         action = Actions.NONE
         value = None
-        # TODO refactor. no need for both flags.
+
         trampoline = False
         teleported = False
 
@@ -142,7 +156,8 @@ class Fish(Interpreter):
                 self.stack.append(ord(self.cell))
         elif self.cell in "'\"":
             self.stringmode = True
-        elif self.cell in NUMBERS:  # Note that Fish supports hexadecimal numbers
+        elif self.cell in NUMBERS:
+            # Note that Fish supports hexadecimal numbers
             self.stack.append(int(self.cell, 16))
 
         # Execution
@@ -159,20 +174,33 @@ class Fish(Interpreter):
         elif self.cell == "i":
             action = Actions.INT_INPUT  # TODO push -1 if no input available
 
-        # Weird instructions
+        # Push cell value to stack
         elif self.cell == "g":
             y, x = self.stack.pop(), self.stack.pop()
-            try:
-                self.stack.append(ord(self.board[y][x]))
-            except KeyError:
-                self.stack.append(0)
+            self.stack.append(self.grid[coord(x, y)])
+        # Update cell value, complicated since this is on an infinite grid
         elif self.cell == "p":
             y, x, v = self.stack.pop(), self.stack.pop(), self.stack.pop()
-            try:
+            self.grid[coord(x, y)] = v
+            # Update displayed board as well, if this change is within limits
+            # and the value does not correspond to some control character
+            if 0 <= x < self.limit.x and 0 <= y < self.limit.y and chr(v).isprintable():
+                # Extend board if necessary
+                # (remember that coordinates are zero-indexed)
+                if x >= self.maxpos.x or y >= self.maxpos.y:
+                    ext = (
+                        coord(max(x + 1, self.maxpos.x), max(y + 1, self.maxpos.y))
+                        - self.maxpos
+                    )
+                    for line in self.board:
+                        line.extend([" "] * ext.x)
+                    for _ in range(ext.y):
+                        self.board.extend([[" "] * (self.maxpos.x + ext.x)])
+                # Update board cell
                 self.board[y][x] = chr(v)
-            except KeyError:
-                action = Actions.ERROR
-                value = f"No such position ({x}, {y})"  # TODO i'm sorry but this has to be "something is fishy..." (though we could use some debugging capabilities)
+            # Update extents of grid
+            self.minpos = coord(min(self.minpos.x, x), min(self.minpos.y, y))
+            self.maxpos = coord(max(self.maxpos.x, x), max(self.maxpos.y, y))
 
         # Movement
         elif self.cell in DELTA_CHANGERS:
@@ -234,11 +262,15 @@ class Fish(Interpreter):
                 self.stack.append(self.register)
                 self.register = None
 
-        # Update position, wrap around source code TODO don't wrap around, infinite grid :))))
+        # Update position
         if trampoline and not self.stringmode:
-            self.pos = (self.pos + self.delta + self.delta) % self.maxpos
+            self.pos = self.pos + self.delta + self.delta
         elif not teleported:
-            self.pos = (self.pos + self.delta) % self.maxpos
+            self.pos = self.pos + self.delta
+
+        # Wrap around source code (account for possible negative coordinates)
+        self.pos = (self.pos + self.minpos) % (self.maxpos - self.minpos) - self.minpos
+
         return (self.pos, action, value)
 
     def recv(self, value):

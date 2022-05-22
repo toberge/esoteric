@@ -40,6 +40,7 @@ class Gui:
         self.cols = cols
         colsplit = cols // 2 + cols % 2
         linesplit = lines // 2 + lines % 2
+        interpreter.limit = coord(colsplit - 2, lines - 2)
         self.codepane = curses.newwin(lines, colsplit)
         self.stackpane = curses.newwin(linesplit, cols // 2, 0, colsplit)
         self.resultpane = curses.newwin(lines // 2, cols // 2, linesplit, colsplit)
@@ -85,9 +86,15 @@ class Gui:
 
             self.display_stack()
             self.display_result()
-
             self.display_code()
-            self.codepane.move(pos.y + 1, pos.x + 1)
+
+            if (
+                0 <= pos.x < self.interpreter.limit.x
+                and 0 <= pos.y < self.interpreter.limit.y
+            ):
+                self.codepane.move(pos.y + 1, pos.x + 1)
+            else:
+                self.resultpane.addstr(1, 1, "Cursor is out of bounds")
 
             self.stackpane.refresh()
             self.resultpane.refresh()

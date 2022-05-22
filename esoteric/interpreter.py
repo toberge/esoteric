@@ -43,6 +43,8 @@ class Interpreter(ABC):
             line.extend([" "] * (width - len(line)))
         self.board = board
         self.maxpos = coord(width, len(board))
+        # Extents which a changing grid that should be displayed must not exceed (set by GUI)
+        self.limit = self.maxpos
 
     @classmethod
     def from_string(cls, board: str):
