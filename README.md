@@ -1,6 +1,8 @@
 # esoteric
 
-Interpreter, visualizer and editor for (2D) esoteric programming languages like [`><>`](https://esolangs.org/wiki/Fish) and [Befunge](https://esolangs.org/wiki/Befunge)
+Visual interpreter for (2D) esoteric programming languages like [`><>`](https://esolangs.org/wiki/Fish) and [Befunge](https://esolangs.org/wiki/Befunge)
+
+_Support for ><> is still in the works._
 
 [![asciicast](https://asciinema.org/a/496318.svg)](https://asciinema.org/a/496318)
 
